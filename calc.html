@@ -33,6 +33,11 @@
         var elt = document.getElementById('calculator');
         var calculator = Desmos.GraphingCalculator(elt, { expressions: false, settingsMenu: false, lockViewport: true });
 
+        window.onload = function () {
+            document.getElementById('stateOutput').value = '';
+            document.getElementById('stateInput').value = '';
+        };
+
         function getGraphState() {
             const state = calculator.getState();
             document.getElementById('stateOutput').value = JSON.stringify(state, null, 2);
