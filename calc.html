@@ -24,7 +24,9 @@
     <div class="controls">
         <button onclick="getGraphState()">Get Current State</button>
         <button onclick="setGraphState()">Set New State</button>
-        <textarea id="stateOutput" rows="10" cols="50" placeholder="Graph State will appear here..."></textarea>
+        <textarea id="stateOutput" rows="10" placeholder="Displays the current state"></textarea>
+        <textarea id="stateInput" rows="10" placeholder="Describe the shapes you want, in plain text"></textarea>
+        <button onclick="sendToRacket()">Send to Racket</button>
     </div>
 
     <script>
@@ -48,6 +50,19 @@
                 }
             };
             calculator.setState(newState);
+        }
+
+        function sendToRacket() {
+            const userInput = document.getElementById('stateInput').value;
+            fetch('http://localhost:8080/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: userInput
+            })
+                .then(response => {
+                    console.log("Response status:", response.status);
+                    return response.text()
+                });
         }
     </script>
 </body>
