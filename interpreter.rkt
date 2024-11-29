@@ -3,12 +3,19 @@
 (require racket/string)
 
 (define (pre-process str)
-  (displayln str)
   (define commands (string-split str #rx"\n+"))
-  (map (lambda (comm) (string-split comm)) commands))
+  (map (lambda (comm)
+         (define split_comm (string-split comm))
+         (map (lambda (word)
+                (if (string->number word)
+                    (string->number word)
+                    word))
+              split_comm))
+       commands))
 
 (define (interpret str)
-  (define commands (pre-process (bytes->string/utf-8 str))))
+  (define commands (pre-process (bytes->string/utf-8 str)))
+  (display (list-ref commands 5)))
 
 (provide interpret)
 
