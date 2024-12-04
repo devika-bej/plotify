@@ -29,7 +29,7 @@
 
 (define (group-commands commands shape-set cur-shape)
   (cond
-    [(empty? commands) (reverse (cons cur-shape shape-set))]
+    [(empty? commands) (cons "graph" (list (reverse (cons cur-shape shape-set))))]
     [else
      (let ([cur (car commands)])
        (cond
@@ -52,10 +52,36 @@
 
 (define-datatype ast
                  ast?
-                 [graph (vals (list-of shape?))]
-                 [shape-val (op is-shape-op?) (arg-list ast?) (feat ast?)]
+                 [graph (op is-graph-op?) (vals (list-of ast?))]
+                 [shape-val (op is-shape-op?) (arg-list ast?) (feat-list ast?)]
                  [arg-list (vals (list-of number?))]
-                 [feat (op is-feature-op?) (val (or string? number?))])
+                 [feat-list (vals (list-of ast?))]
+                 [feat (op is-feature-op?) (val is-feature-val?)])
+
+(define (commands->ast commands)
+  (match commands
+    [(list op (list shapes ...))
+     #:when (is-graph-op? op)
+     (graph op (map commands->ast shapes))]
+    [(list op args ... feat-list)
+     #:when (is-shape-op? op)
+     (shape-val op (commands->ast args) (commands->ast feat-list))]
+    [vals
+     #:when (and (list? vals) (andmap number? vals))
+     (arg-list vals)]
+    [vals
+     #:when (or (null? vals)
+                (and (list? vals)
+                     (andmap (lambda (x) (and (list? x) (is-feature-op? (car x)))) vals)))
+     (feat-list (map commands->ast vals))]
+    [(list op val)
+     #:when (is-feature-op? op)
+     (feat op val)]))
+
+(define (is-graph-op? k)
+  (match k
+    ["graph" #t]
+    [_ #f]))
 
 (define (is-shape-op? k)
   (match k
@@ -75,10 +101,15 @@
     ["thick" #t]
     [_ #f]))
 
+(define (is-feature-val? k)
+  (or (string? k) (number? k)))
+
 (define (interpret str)
   (define commands (pre-process (bytes->string/utf-8 str)))
   (define grouped-commands (group-commands commands '() null))
-  (display (list-ref grouped-commands 100)))
+  (displayln grouped-commands)
+  (define graph-ast (commands->ast grouped-commands))
+  (displayln graph-ast))
 
 (provide interpret)
 
