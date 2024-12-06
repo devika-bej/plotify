@@ -2,9 +2,10 @@
 
 (require eopl)
 (require json)
-(require rackunit)
-(require racket/string)
+(require racket/dict)
 (require racket/match)
+(require racket/string)
+(require rackunit)
 (require rackunit/text-ui)
 
 (define (pre-process str)
@@ -130,48 +131,73 @@
        x
        i)))
   (define point-str (string-join point-list " , "))
-  (string-append (string-append exp point-str) "\\right)"))
+  (hash 'latex (string-append (string-append exp point-str) "\\right)")))
 
-(define eval
-  (lambda (a)
-    (cases ast
-           a
-           [graph (op vals) (map eval vals)]
-           [shape-val
-            (op arg-list feat-list)
-            (cons (cond
-                    [(equal? op "circle")
-                     (define vals (eval arg-list))
-                     (match vals
-                       [(list c_x c_y r) (eval-circle c_x c_y r)]
-                       [else (error "Invalid arguments for circle" vals)])]
-                    [(equal? op "line")
-                     (define vals (eval arg-list))
-                     (match vals
-                       [(list x_1 y_1 x_2 y_2) (eval-line x_1 y_1 x_2 y_2)]
-                       [else (error "Invalid arguments for line" vals)])]
-                    [(equal? op "poly")
-                     (define vals (eval arg-list))
-                     (cond
-                       [(even? (length vals)) (eval-poly vals)]
-                       [else (error "Invalid arguments for polygon" vals)])])
-                  (eval feat-list))]
-           [arg-list (vals) vals]
-           [feat-list (vals) (map eval vals)]
-           [feat
-            (op val)
-            (cond
-              [(equal? op "color") (hash 'color val)]
-              [(equal? op "opacity") (hash 'fillOpacity: (number->string val))]
-              [(equal? op "thick") (hash 'lineWidth: (number->string val))])]
-           [else (error "Unknown ast")])))
+(define (eval a)
+  (cases ast
+         a
+         [graph (op vals) (map eval vals)]
+         [shape-val
+          (op arg-list feat-list)
+          (cons (cond
+                  [(equal? op "circle")
+                   (define vals (eval arg-list))
+                   (match vals
+                     [(list c_x c_y r) (eval-circle c_x c_y r)]
+                     [else (error "Invalid arguments for circle" vals)])]
+                  [(equal? op "line")
+                   (define vals (eval arg-list))
+                   (match vals
+                     [(list x_1 y_1 x_2 y_2) (eval-line x_1 y_1 x_2 y_2)]
+                     [else (error "Invalid arguments for line" vals)])]
+                  [(equal? op "poly")
+                   (define vals (eval arg-list))
+                   (cond
+                     [(even? (length vals)) (eval-poly vals)]
+                     [else (error "Invalid arguments for polygon" vals)])])
+                (eval feat-list))]
+         [arg-list (vals) vals]
+         [feat-list (vals) (map eval vals)]
+         [feat
+          (op val)
+          (cond
+            [(equal? op "color") (hash 'color val)]
+            [(equal? op "opacity") (hash 'fillOpacity: (number->string val))]
+            [(equal? op "thick") (hash 'lineWidth: (number->string val))])]
+         [else (error "Unknown ast")]))
+
+(define (show-exp expressions)
+  (map (lambda (x)
+         (displayln "new")
+         (map displayln x))
+       expressions))
+
+(define (show-json expressions)
+  (map displayln expressions))
+
+(define (enumerate lst)
+  (map list
+       (range (length lst))
+       lst))
+
+(define (exp->json expressions)
+  (map (lambda (exp-ele)
+         (define index (first exp-ele))
+         (define exp (second exp-ele))
+         (define new-exp
+           (foldl (lambda (cur-exp res-exp)
+                    (hash-set res-exp (first (hash-keys cur-exp)) (first (hash-values cur-exp))))
+                  (hash)
+                  exp))
+         (hash-set (hash-set new-exp 'type "expression") 'id (number->string (add1 index))))
+       (enumerate expressions)))
 
 (define (interpret str)
   (define commands (pre-process (bytes->string/utf-8 str)))
   (define grouped-commands (group-commands commands '() null))
   (define graph-ast (commands->ast grouped-commands))
   (define expressions (eval graph-ast))
-  (write-json expressions))
+  (define graph-json (exp->json expressions)))
 
 (provide interpret)
 
