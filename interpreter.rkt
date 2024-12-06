@@ -1,6 +1,7 @@
 #lang racket
 
 (require eopl)
+(require json)
 (require rackunit)
 (require racket/string)
 (require racket/match)
@@ -104,12 +105,55 @@
 (define (is-feature-val? k)
   (or (string? k) (number? k)))
 
+(define (eval-circle c_x c_y r)
+  (hash 'latex (format "\\left(x - ~a\\right)^{2} + \\left(y - ~a\\right)^{2} <= ~a" c_x c_y r)))
+
+(define (eval-line x_1 y_1 x_2 y_2)
+  (hash 'latex
+        (format
+         "\\left(y - ~a\\right)\\left(~a - ~a\\right) = \\left(x - ~a\\right)\\left(~a - ~a\\right)"
+         y_1
+         x_1
+         x_2
+         x_1
+         y_1
+         y_2)))
+
+(define eval
+  (lambda (a)
+    (cases ast
+           a
+           [graph (op vals) (map eval vals)]
+           [shape-val
+            (op arg-list feat-list)
+            (cons (cond
+                    [(equal? op "circle")
+                     (define vals (eval arg-list))
+                     (match vals
+                       [(list c_x c_y r) (eval-circle c_x c_y r)]
+                       [else (error "Invalid arguments for circle" arg-list)])]
+                    [(equal? op "line")
+                     (define vals (eval arg-list))
+                     (match vals
+                       [(list x_1 y_1 x_2 y_2) (eval-line x_1 y_1 x_2 y_2)]
+                       [else (error "Invalid arguments for line" arg-list)])])
+                  (eval feat-list))]
+           [arg-list (vals) vals]
+           [feat-list (vals) (map eval vals)]
+           [feat
+            (op val)
+            (cond
+              [(equal? op "color") (hash 'color val)]
+              [(equal? op "opacity") (hash 'fillOpacity: (number->string val))]
+              [(equal? op "thick") (hash 'lineWidth: (number->string val))])]
+           [else (error "Unknown ast")])))
+
 (define (interpret str)
   (define commands (pre-process (bytes->string/utf-8 str)))
   (define grouped-commands (group-commands commands '() null))
-  (displayln grouped-commands)
   (define graph-ast (commands->ast grouped-commands))
-  (displayln graph-ast))
+  (define expressions (eval graph-ast))
+  (write-json expressions))
 
 (provide interpret)
 
