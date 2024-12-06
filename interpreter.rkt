@@ -119,6 +119,19 @@
          y_1
          y_2)))
 
+(define (eval-poly vals)
+  (define exp "\\operatorname{polygon}\\left(")
+  (define point-list
+    (for/list ([(x i) (in-indexed vals)])
+      ((lambda (x i)
+         (cond
+           [(even? i) (format "\\left( ~a" x)]
+           [(odd? i) (format "~a \\right)" x)]))
+       x
+       i)))
+  (define point-str (string-join point-list " , "))
+  (string-append (string-append exp point-str) "\\right)"))
+
 (define eval
   (lambda (a)
     (cases ast
@@ -131,12 +144,17 @@
                      (define vals (eval arg-list))
                      (match vals
                        [(list c_x c_y r) (eval-circle c_x c_y r)]
-                       [else (error "Invalid arguments for circle" arg-list)])]
+                       [else (error "Invalid arguments for circle" vals)])]
                     [(equal? op "line")
                      (define vals (eval arg-list))
                      (match vals
                        [(list x_1 y_1 x_2 y_2) (eval-line x_1 y_1 x_2 y_2)]
-                       [else (error "Invalid arguments for line" arg-list)])])
+                       [else (error "Invalid arguments for line" vals)])]
+                    [(equal? op "poly")
+                     (define vals (eval arg-list))
+                     (cond
+                       [(even? (length vals)) (eval-poly vals)]
+                       [else (error "Invalid arguments for polygon" vals)])])
                   (eval feat-list))]
            [arg-list (vals) vals]
            [feat-list (vals) (map eval vals)]
