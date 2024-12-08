@@ -197,7 +197,8 @@
   (define grouped-commands (group-commands commands '() null))
   (define graph-ast (commands->ast grouped-commands))
   (define expressions (eval graph-ast))
-  (define graph-json (exp->json expressions)))
+  (define graph-json (exp->json expressions))
+  graph-json)
 
 (provide interpret)
 

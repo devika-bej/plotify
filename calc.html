@@ -67,6 +67,18 @@
                 .then(response => {
                     console.log("Response status:", response.status);
                     return response.text()
+                })
+                .then(data => {
+                    console.log("Received from Racket server:", data);
+                    expList = JSON.parse(data)
+                    var newState = calculator.getState()
+                    newState["expressions"]["list"] = expList
+                    console.log("current state: ", calculator.getState())
+                    console.log("to be state: ", newState)
+                    calculator.setState(newState);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
                 });
         }
     </script>
