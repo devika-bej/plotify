@@ -7,26 +7,138 @@
     <title>Plotify</title>
     <script src="https://www.desmos.com/api/v1.10/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
     <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
         #calculator {
-            width: 100%;
-            height: 500px;
+            width: 50%;
+            height: 100%;
+            background-color: #f0f0f0;
+            /* Optional: to visualize the calculator area */
+        }
+
+        .right-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-content {
+            flex: 1;
+            padding-left: 10px;
+            overflow-y: auto;
+            height: 75%;
         }
 
         .controls {
-            margin-top: 20px;
+            height: 25%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #stateInput {
+            width: 100%;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 
 <body>
-    <h1>Plotify</h1>
     <div id="calculator"></div>
-    <div class="controls">
-        <button onclick="getGraphState()">Get Current State</button>
-        <button onclick="setGraphState()">Set New State</button>
-        <textarea id="stateOutput" rows="10" placeholder="Displays the current state"></textarea>
-        <textarea id="stateInput" rows="10" placeholder="Describe the shapes you want, in plain text"></textarea>
-        <button onclick="sendToRacket()">Send to Racket</button>
+    <div class="right-panel">
+        <div class="text-content">
+            <h1 style="margin-top: 0px; margin-bottom: 0px;">Plotify</h1>
+            <p style="margin-top: 0px; margin-bottom: 0px;">
+                Plotify is a tool to visualize mathematical graphs just like in Desmos Graphing Calculator,
+                using a simpler and more intuitive language.
+            </p>
+            <h2 style="margin-top: 0px; margin-bottom: 0px;">Language Operators</h2>
+            <p style="margin-top: 0px; margin-bottom: 0px;">
+                The language has two main types of operators: Shape and Feature.
+            </p>
+
+            <h3 style="margin-top: 0px; margin-bottom: 0px;">Shape Operators</h3>
+            <p style="margin-top: 0px; margin-bottom: 0px;">
+                Shape operators are used for rendering different shapes:
+            </p>
+            <ul style="margin-top: 0px; margin-bottom: 0px;">
+                <li>
+                    <strong>point:</strong>
+                    <br>
+                    Usage: <code>point x y</code>
+                    <br>
+                    Graphs: A point at (x,y)
+                </li>
+                <li>
+                    <strong>line:</strong>
+                    <br>
+                    Usage: <code>line x1 y1 x2 y2</code>
+                    <br>
+                    Graphs: A line extending from (x1,y1) to (x2,y2)
+                </li>
+                <li>
+                    <strong>poly:</strong>
+                    <br>
+                    Usage: <code>poly x1 y1 x2 y2 ... xn yn</code>
+                    <br>
+                    Graphs: A polygon connecting points from (x1,y1) to (xn,yn)
+                </li>
+                <li>
+                    <strong>circle:</strong>
+                    <br>
+                    Usage: <code>circle c_x c_y r</code>
+                    <br>
+                    Graphs: A circle centered at (c_x,c_y) with radius r
+                </li>
+                <li>
+                    <strong>ellipse:</strong>
+                    <br>
+                    Usage: <code>ellipse c_x c_y r_x r_y [m]</code>
+                    <br>
+                    Graphs: An ellipse centered at (c_x,c_y) with radius r_x about x-axis
+                    and r_y about y-axis. Optional argument m can tilt the ellipse with m slope
+                </li>
+            </ul>
+
+            <h3 style="margin-top: 0px; margin-bottom: 0px;">Feature Operators</h3>
+            <p style="margin-top: 0px; margin-bottom: 0px;">
+                Feature operators modify the nearest preceding shape operator:
+            </p>
+            <ul style="margin-top: 0px; margin-bottom: 0px;">
+                <li>
+                    <strong>color:</strong>
+                    <br>
+                    Usage: <code>color #hex</code>
+                    <br>
+                    Effect: Colors the relevant shape with the specified hex color
+                </li>
+                <li>
+                    <strong>opacity:</strong>
+                    <br>
+                    Usage: <code>opacity val</code>
+                    <br>
+                    Effect: Changes the transparency of shapes with fill (circle, ellipse, poly)
+                </li>
+                <li>
+                    <strong>thick:</strong>
+                    <br>
+                    Usage: <code>thick val</code>
+                    <br>
+                    Effect: Changes the thickness of the line or border of the graph
+                </li>
+            </ul>
+        </div>
+        <div class="controls">
+            <textarea id="stateInput" rows="10"
+                placeholder="Describe the shapes you want, in plotify language"></textarea>
+            <button onclick="sendToRacket()">View Graph</button>
+        </div>
     </div>
 
     <script>
@@ -34,28 +146,8 @@
         var calculator = Desmos.GraphingCalculator(elt, { expressions: false, settingsMenu: false, lockViewport: true });
 
         window.onload = function () {
-            document.getElementById('stateOutput').value = '';
             document.getElementById('stateInput').value = '';
         };
-
-        function getGraphState() {
-            const state = calculator.getState();
-            document.getElementById('stateOutput').value = JSON.stringify(state, null, 2);
-        }
-
-        function setGraphState() {
-            const newState = {
-                "graph": {
-                    "viewport": { "xmin": -5, "xmax": 5, "ymin": -5, "ymax": 5 }
-                },
-                "expressions": {
-                    "list": [
-                        { "id": "1", "type": "expression", "latex": "y=x", "hidden": false }
-                    ]
-                }
-            };
-            calculator.setState(newState);
-        }
 
         function sendToRacket() {
             const userInput = document.getElementById('stateInput').value;
