@@ -95,7 +95,7 @@
   (hash
    'latex
    (format
-    "\\frac{ ~a \\left(y - ~a \\right) + \\left(x - ~a \\right)}{ ~a }^{2}+\\frac{\\left(y - ~a \\right) - ~a \\left(x - ~a \\right)}{ ~a }^{2} <= ~a^{2}+1"
+    "\\frac{ ~a \\left(y - ~a \\right) + \\left(x - ~a \\right)}{ ~a }^{2}+\\frac{\\left(y - ~a \\right) - ~a \\left(x - ~a \\right)}{ ~a }^{2} <= \\left( ~a \\right)^{2}+1"
     m
     c_y
     c_x
