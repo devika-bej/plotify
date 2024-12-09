@@ -133,6 +133,24 @@
   (define point-str (string-join point-list " , "))
   (hash 'latex (string-append (string-append exp point-str) "\\right)")))
 
+(define (eval-point x y)
+  (hash 'latex (format "\\left( ~a , ~a \\right)" x y)))
+
+(define (eval-ellipse c_x c_y r_x r_y [m 0])
+  (hash
+   'latex
+   (format
+    "\\frac{ ~a \\left(y - ~a \\right) + \\left(x - ~a \\right)}{ ~a }^{2}+\\frac{\\left(y - ~a \\right) - ~a \\left(x - ~a \\right)}{ ~a }^{2} <= ~a^{2}+1"
+    m
+    c_y
+    c_x
+    r_x
+    c_y
+    m
+    c_x
+    r_y
+    m)))
+
 (define (eval a)
   (cases ast
          a
@@ -154,7 +172,18 @@
                    (define vals (eval arg-list))
                    (cond
                      [(even? (length vals)) (eval-poly vals)]
-                     [else (error "Invalid arguments for polygon" vals)])])
+                     [else (error "Invalid arguments for polygon" vals)])]
+                  [(equal? op "point")
+                   (define vals (eval arg-list))
+                   (match vals
+                     [(list x y) (eval-point x y)]
+                     [else (error "Invalid arguments for point" vals)])]
+                  [(equal? op "ellipse")
+                   (define vals (eval arg-list))
+                   (match vals
+                     [(list c_x c_y r_x r_y) (eval-ellipse c_x c_y r_x r_y)]
+                     [(list c_x c_y r_x r_y m) (eval-ellipse c_x c_y r_x r_y m)]
+                     [else (error "Invalid arguments for ellipse" vals)])])
                 (eval feat-list))]
          [arg-list (vals) vals]
          [feat-list (vals) (map eval vals)]
@@ -162,8 +191,8 @@
           (op val)
           (cond
             [(equal? op "color") (hash 'color val)]
-            [(equal? op "opacity") (hash 'fillOpacity: (number->string val))]
-            [(equal? op "thick") (hash 'lineWidth: (number->string val))])]
+            [(equal? op "opacity") (hash 'fillOpacity (number->string val))]
+            [(equal? op "thick") (hash 'lineWidth (number->string val))])]
          [else (error "Unknown ast")]))
 
 (define (show-exp expressions)
@@ -176,9 +205,7 @@
   (map displayln expressions))
 
 (define (enumerate lst)
-  (map list
-       (range (length lst))
-       lst))
+  (map list (range (length lst)) lst))
 
 (define (exp->json expressions)
   (map (lambda (exp-ele)
