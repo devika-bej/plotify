@@ -4,13 +4,13 @@
          web-server/servlet-env
          racket/serialize
          json
-         "interpreter.rkt")
+         "compiler.rkt")
 
 (define (handle-post req)
   (define user-input (request-post-data/raw req))
   (displayln "Received user input:")
   (displayln user-input)
-  (define output (interpret user-input))
+  (define output (compile user-input))
   (response/output #:mime-type #"application/json"
                    #:headers (list (header #"Access-Control-Allow-Origin" #"*"))
                    (λ (out)
