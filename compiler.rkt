@@ -62,7 +62,7 @@
 ;;; Shape evaluators
 
 (define (eval-circle c_x c_y r)
-  (hash 'latex (format "\\left(x - ~a\\right)^{2} + \\left(y - ~a\\right)^{2} <= ~a" c_x c_y r)))
+  (hash 'latex (format "\\left(x - ~a\\right)^{2} + \\left(y - ~a\\right)^{2} <= \\left( ~a \\right)^{2}" c_x c_y r)))
 
 (define (eval-line x_1 y_1 x_2 y_2)
   (hash 'latex
